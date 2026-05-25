@@ -5,9 +5,24 @@ import shutil
 from pathlib import Path
 import logging
 from datetime import datetime
+import json
 
-def setup_logging():
-    log_file = Path.home() / "Downloads" / "auto_organizer.log"
+def load_config():
+    config_path = Path(__file__).parent / "config.json"
+    if not config_path.exists():
+        logging.error(f"Конфигурационный файл не найден: {config_path}")
+        return None
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        return config
+    except Exception as e:
+        logging.error(f"Ошибка при чтении конфига: {e}")
+        return None
+
+def setup_logging(target_dir):
+    log_file = target_dir / "auto_organizer.log"
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
@@ -17,39 +32,32 @@ def setup_logging():
         ]
     )
 
-def get_file_category(file_extension):
-    categories = {
-        'Images': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg', '.webp'],
-        'Documents': ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.xls', '.xlsx', '.ppt', '.pptx'],
-        'Archives': ['.zip', '.rar', '.7z', '.tar', '.gz'],
-        'Audio': ['.mp3', '.wav', '.flac', '.aac'],
-        'Video': ['.mp4', '.avi', '.mov', '.mkv', '.wmv'],
-        'Code': ['.py', '.js', '.html', '.css', '.java', '.cpp', '.c', '.php'],
-        'Executables': ['.exe', '.msi', '.dmg', '.deb'],
-        'Torrents': ['.torrent'],
-    }
+def get_file_category(file_extension, categories):
     for category, extensions in categories.items():
         if file_extension.lower() in extensions:
             return category
     return 'Other'
 
-def organize_downloads():
-    downloads_path = Path.home() / "Downloads"
-    if not downloads_path.exists():
-        logging.error("Папка Downloads не найдена!")
+def organize_downloads(config):
+    target_dir_str = config.get('target_directory', '~/Downloads')
+    target_path = Path(target_dir_str).expanduser()
+
+    if not target_path.exists():
+        logging.error(f"Папка {target_path} не найдена!")
         return
 
+    categories = config.get('categories', {})
     processed_count = 0
     skipped_count = 0
 
-    for item in downloads_path.iterdir():
+    for item in target_path.iterdir():
         if item.is_dir() or item.name.startswith('.') or item.name == 'auto_organizer.log':
             continue
 
         file_extension = item.suffix
-        category = get_file_category(file_extension)
+        category = get_file_category(file_extension, categories)
 
-        category_path = downloads_path / category
+        category_path = target_path / category
         category_path.mkdir(exist_ok=True)
 
         destination = category_path / item.name
@@ -68,8 +76,8 @@ def organize_downloads():
             logging.error(f"Ошибка при перемещении {item.name}: {e}")
             skipped_count += 1
 
-    preserve_folders = ['Images', 'Documents', 'Archives', 'Audio', 'Video', 'Code', 'Executables', 'Torrents', 'Other']
-    for folder in downloads_path.iterdir():
+    preserve_folders = list(categories.keys()) + ['Other']
+    for folder in target_path.iterdir():
         if folder.is_dir() and folder.name not in preserve_folders:
             try:
                 if not any(folder.iterdir()):
@@ -84,8 +92,17 @@ if __name__ == "__main__":
     print("🚀 Запуск автосортировщика файлов...")
     print(f"Время начала: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("-" * 50)
-    setup_logging()
-    organize_downloads()
+
+    config = load_config()
+    if not config:
+        print("❌ Не удалось загрузить конфигурацию!")
+        input("Нажмите Enter для выхода...")
+        exit(1)
+
+    target_dir = Path(config.get('target_directory', '~/Downloads')).expanduser()
+    setup_logging(target_dir)
+    organize_downloads(config)
+
     print("-" * 50)
     print("✅ Сортировка завершена!")
     input("Нажмите Enter для выхода...")
