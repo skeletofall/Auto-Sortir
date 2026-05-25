@@ -49,14 +49,20 @@
 ```
 
 3. **Настройте config.json** (опционально):
-   - Измените `target_directory` на нужную папку
-     - Windows: `%USERPROFILE%\\Downloads` (по умолчанию)
-     - Linux/Mac: `~/Downloads`
+   - `target_platform`: Платформа для автоопределения пути (по умолчанию `"auto"`)
+     - `"auto"` — автоматическое определение (рекомендуется)
+     - `"windows"` — Windows
+     - `"linux"` — Linux
+     - `"macos"` — macOS
+   - `target_directory`: Путь к папке для сортировки
+     - `null` — использовать Downloads по умолчанию для вашей платформы (рекомендуется)
+     - Или укажите свой путь: `"C:\\MyFolder"`, `"~/Documents"`, и т.д.
    - Добавьте свои категории и расширения файлов
    - Пример:
 ```json
 {
-  "target_directory": "%USERPROFILE%\\Downloads",
+  "target_platform": "auto",
+  "target_directory": null,
   "categories": {
     "Images": [".jpg", ".png", ".gif"],
     "MyCustomCategory": [".custom", ".special"]
@@ -100,7 +106,8 @@
 - Расширения должны начинаться с точки (`.jpg`, а не `jpg`)
 - Регистр не важен (`.JPG` и `.jpg` обрабатываются одинаково)
 - Файлы без категории попадут в папку `Other`
-- Для Windows используйте `%USERPROFILE%\\Downloads`, для Linux/Mac — `~/Downloads`
+- Оставьте `target_directory: null` для автоматического определения папки Downloads
+- `target_platform: "auto"` автоматически определит вашу ОС
 
 ## 🤝 Contributing
 

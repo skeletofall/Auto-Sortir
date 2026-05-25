@@ -6,6 +6,19 @@ from pathlib import Path
 import logging
 from datetime import datetime
 import json
+import platform
+
+def get_default_downloads_path(target_platform):
+    """Get default Downloads path based on platform"""
+    if target_platform == "auto":
+        target_platform = platform.system().lower()
+
+    if target_platform == "windows":
+        return os.path.join(os.environ.get('USERPROFILE', ''), 'Downloads')
+    elif target_platform in ["linux", "darwin", "macos"]:
+        return os.path.expanduser("~/Downloads")
+    else:
+        return os.path.expanduser("~/Downloads")
 
 def load_config():
     config_path = Path(__file__).parent / "config.json"
@@ -17,11 +30,18 @@ def load_config():
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
 
-        # Expand Windows environment variables
-        target_dir = config.get('target_directory', '~/Downloads')
-        target_dir = os.path.expandvars(target_dir)
-        config['target_directory'] = target_dir
+        target_platform = config.get('target_platform', 'auto')
+        target_dir = config.get('target_directory', None)
 
+        # If no target_directory specified, use platform default
+        if not target_dir:
+            target_dir = get_default_downloads_path(target_platform)
+        else:
+            # Expand environment variables and user home
+            target_dir = os.path.expandvars(target_dir)
+            target_dir = os.path.expanduser(target_dir)
+
+        config['target_directory'] = target_dir
         return config
     except Exception as e:
         logging.error(f"Ошибка при чтении конфига: {e}")

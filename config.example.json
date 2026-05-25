@@ -1,5 +1,6 @@
 {
-  "target_directory": "%USERPROFILE%\\Downloads",
+  "target_platform": "auto",
+  "target_directory": null,
   "categories": {
     "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp", ".heic", ".avif", ".ico", ".tiff", ".tif"],
     "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp", ".csv"],
